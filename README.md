@@ -12,42 +12,43 @@ Auto-generate skeleton/shimmer loading screens from your **actual widget tree**.
 | <img src="https://raw.githubusercontent.com/VaibhavTambe-FlutterDev/auto_skeleton/main/screenshots/02_skeleton_top.png" width="280"/> | <img src="https://raw.githubusercontent.com/VaibhavTambe-FlutterDev/auto_skeleton/main/screenshots/01_loaded_top.png" width="280"/> |
 | <img src="https://raw.githubusercontent.com/VaibhavTambe-FlutterDev/auto_skeleton/main/screenshots/03_skeleton_bottom.png" width="280"/> | <img src="https://raw.githubusercontent.com/VaibhavTambe-FlutterDev/auto_skeleton/main/screenshots/04_loaded_bottom.png" width="280"/> |
 
-| Annotations (Skeleton) |
-|:---:|
-| <img src="https://raw.githubusercontent.com/VaibhavTambe-FlutterDev/auto_skeleton/main/screenshots/05_skeleton_annotations.png" width="280"/> |
+### Annotations: Fine-grained Control
 
-> Toggle button switches between skeleton and real content. Annotations let you control which widgets get skeleton bones — `PlaceholderIgnore` hides the switches, `PlaceholderLeaf` treats icon boxes as solid bones.
+| Annotation Skeleton | Annotation Loaded |
+|:---:|:---:|
+| <img src="https://raw.githubusercontent.com/VaibhavTambe-FlutterDev/auto_skeleton/main/screenshots/05_skeleton_annotations.png" width="280"/> | <img src="https://raw.githubusercontent.com/VaibhavTambe-FlutterDev/auto_skeleton/main/screenshots/04_loaded_bottom.png" width="280"/> |
+
+- **`PlaceholderIgnore`** — the toggle switches are hidden during loading (not relevant to skeleton)
+- **`PlaceholderLeaf`** — the colored icon boxes are treated as solid rectangles (no child traversal)
 
 ## Why auto_skeleton?
 
 Building skeleton loading UIs manually is tedious and goes out of sync with your real layouts. `auto_skeleton` solves this by **introspecting your widget tree** at render time and generating matching bone shapes for every content widget (Text, Image, Icon, Button, etc.).
 
-### Key Differences from Other Packages
+### How It Compares
 
 | Feature | auto_skeleton | skeletonizer | shimmer |
 |---|---|---|---|
-| Auto-detect widget shapes | ✅ | ✅ | ❌ |
-| Zero fake data needed | ✅ | ❌ (needs mock data) | ❌ |
-| Async builder (no setState) | ✅ | ❌ | ❌ |
-| Future + Stream support | ✅ | ❌ | ❌ |
-| Theme-aware colors | ✅ | ❌ | ❌ |
-| Extension syntax `.withSkeleton()` | ✅ | ❌ | ❌ |
-| Pre-built presets (food card, product card) | ✅ | ❌ | ❌ |
-| Multiple effects (shimmer, pulse, solid) | ✅ | ✅ | Shimmer only |
-| Annotation system | ✅ | ✅ | ❌ |
-| Switch animation | ✅ | ✅ | ❌ |
-| Dark mode auto-detection | ✅ | ✅ | ❌ |
+| Auto-detect widget shapes | Yes | Yes | No |
+| Zero fake data needed | Yes | No (needs mock data) | No |
+| Async builder (no setState) | Yes | No | No |
+| Future + Stream support | Yes | No | No |
+| Theme-aware colors | Yes | No | No |
+| Extension syntax `.withSkeleton()` | Yes | No | No |
+| Pre-built presets | Yes | No | No |
+| Multiple effects (shimmer, pulse, solid) | Yes | Yes | Shimmer only |
+| Annotation system | Yes | Yes | No |
+| Switch animation | Yes | Yes | No |
+| Dark mode auto-detection | Yes | Yes | No |
+
+> *Comparison based on default features of each package as of March 2026. All packages are actively maintained and excellent in their own right.*
 
 ## Installation
 
-Add to your `pubspec.yaml`:
-
 ```yaml
 dependencies:
-  auto_skeleton: ^0.1.0
+  auto_skeleton: ^0.1.1
 ```
-
-Then run:
 
 ```bash
 flutter pub get
@@ -121,6 +122,59 @@ Card(
 ).withSkeleton(loading: _isLoading)
 ```
 
+## Migrating from Other Packages
+
+### From `shimmer`
+
+```dart
+// Before (shimmer) — manual layout, no auto-detection
+Shimmer.fromColors(
+  baseColor: Colors.grey[300]!,
+  highlightColor: Colors.grey[100]!,
+  child: Column(
+    children: [
+      Container(width: 48, height: 48, color: Colors.white),
+      Container(width: 200, height: 16, color: Colors.white),
+      Container(width: 150, height: 14, color: Colors.white),
+    ],
+  ),
+)
+
+// After (auto_skeleton) — one line, auto-detected
+AutoSkeleton(
+  enabled: _isLoading,
+  child: myActualWidget,  // your real widget, real data
+)
+```
+
+### From `skeletonizer`
+
+```dart
+// Before (skeletonizer) — requires fake/mock data
+Skeletonizer(
+  enabled: _isLoading,
+  child: ListTile(
+    title: Text('Fake Name Here'),        // fake data!
+    subtitle: Text('Fake email@test.com'), // fake data!
+    leading: CircleAvatar(
+      backgroundImage: NetworkImage('https://fake-url.com/img'), // fake!
+    ),
+  ),
+)
+
+// After (auto_skeleton) — zero fake data
+AutoSkeleton(
+  enabled: _isLoading,
+  child: myActualWidget,  // same widget, real data, no mocks
+)
+```
+
+**Key differences when migrating:**
+- No fake data needed — use your actual widgets
+- Colors are theme-aware by default (remove manual color setup)
+- Use `.withSkeleton(loading: true)` for even cleaner syntax
+- Use `AutoSkeletonBuilder` to eliminate `setState` + `_isLoading` boilerplate entirely
+
 ## Color Customization
 
 ### Layer 1: Theme-aware (zero config)
@@ -180,8 +234,6 @@ AutoSkeleton(
   effect: PulseEffect(
     color: Colors.blue.shade100,
     duration: Duration(milliseconds: 1200),
-    minOpacity: 0.4,
-    maxOpacity: 1.0,
   ),
   child: MyWidget(),
 )
@@ -201,29 +253,28 @@ AutoSkeleton(
 
 ## Annotations
 
-Control how specific widgets are skeletonized using annotation wrappers:
+Control how specific widgets are skeletonized:
 
 ### PlaceholderIgnore
 
-Hide a widget completely during loading:
+Hide a widget completely during loading — useful for interactive elements (switches, buttons) that don't make sense in a skeleton:
 
 ```dart
 AutoSkeleton(
   enabled: _isLoading,
-  child: Column(
-    children: [
-      Text('This gets a skeleton bone'),
-      PlaceholderIgnore(
-        child: Text('This is hidden during loading'),
-      ),
-    ],
+  child: ListTile(
+    title: Text('Notifications'),
+    subtitle: Text('Push & email alerts'),
+    trailing: PlaceholderIgnore(
+      child: Switch(value: true, onChanged: (_) {}),
+    ),
   ),
 )
 ```
 
 ### PlaceholderLeaf
 
-Mark complex widgets (charts, maps, custom painters) as a single bone instead of traversing their children:
+Mark complex widgets (charts, maps, custom painters) as a single solid bone instead of traversing their children:
 
 ```dart
 PlaceholderLeaf(
@@ -234,13 +285,12 @@ PlaceholderLeaf(
 
 ### PlaceholderReplace
 
-Replace a widget with a custom placeholder:
+Replace a widget with a completely custom placeholder:
 
 ```dart
 PlaceholderReplace(
   replacement: Container(
-    width: 48,
-    height: 48,
+    width: 48, height: 48,
     decoration: BoxDecoration(
       color: Colors.grey.shade300,
       shape: BoxShape.circle,
@@ -256,43 +306,23 @@ PlaceholderReplace(
 
 Ready-to-use skeleton patterns for common UI layouts:
 
-### List Tile
-
 ```dart
-SkeletonPresets.listTile(
-  itemCount: 5,
-  itemHeight: 72.0,
-)
-```
+// List with avatar, title, subtitle
+SkeletonPresets.listTile(itemCount: 5)
 
-### Product Card (E-commerce)
+// E-commerce product card
+SkeletonPresets.productCard(width: 160.0)
 
-```dart
-SkeletonPresets.productCard(
-  width: 160.0,
-  imageHeight: 160.0,
-)
-```
-
-### Food Card (Delivery Apps)
-
-```dart
+// Food delivery restaurant card
 SkeletonPresets.foodCard()
-```
 
-### Horizontal Card Row
-
-```dart
-SkeletonPresets.horizontalCardRow(
-  itemCount: 4,
-  cardWidth: 140.0,
-  cardHeight: 180.0,
-)
+// Horizontal scrollable card row
+SkeletonPresets.horizontalCardRow(itemCount: 4)
 ```
 
 ## Global Configuration
 
-Set defaults for your entire app using `AutoSkeletonConfig`:
+Set defaults for your entire app:
 
 ```dart
 AutoSkeletonConfig(
@@ -302,25 +332,8 @@ AutoSkeletonConfig(
     textBorderRadius: 4.0,
     containerBorderRadius: 8.0,
     enableSwitchAnimation: true,
-    switchAnimationDuration: Duration(milliseconds: 300),
-    switchAnimationCurve: Curves.easeInOut,
-    justifyMultiLineText: true,
   ),
   child: MaterialApp(...),
-)
-```
-
-## Switch Animation
-
-Smoothly transition from skeleton to content:
-
-```dart
-AutoSkeleton(
-  enabled: _isLoading,
-  enableSwitchAnimation: true,
-  switchAnimationDuration: Duration(milliseconds: 500),
-  switchAnimationCurve: Curves.easeOut,
-  child: MyWidget(),
 )
 ```
 
@@ -342,9 +355,9 @@ CustomScrollView(
 ## How It Works
 
 1. **Layout Phase**: The child widget tree is built and laid out (invisibly on the first frame).
-2. **Scan Phase**: After layout, `WidgetTreeScanner` walks the element tree and identifies content widgets (Text, Image, Icon, Button, etc.).
-3. **Bone Generation**: For each content widget, a `BoneRect` is created matching its position and size in the layout.
-4. **Paint Phase**: `BonePainter` renders the chosen effect (shimmer/pulse/solid) over each bone rectangle.
+2. **Scan Phase**: `WidgetTreeScanner` walks the element tree and identifies content widgets.
+3. **Bone Generation**: For each content widget, a `BoneRect` is created matching its position and size.
+4. **Paint Phase**: `BonePainter` renders the chosen effect over each bone rectangle.
 5. **Transition**: When loading completes, the skeleton fades out and real content fades in.
 
 ## Supported Widgets
@@ -352,13 +365,10 @@ CustomScrollView(
 The scanner automatically detects and creates bones for:
 
 - `Text` & `RichText` (with multi-line support)
-- `Image`
-- `Icon`
-- `CircleAvatar`
+- `Image`, `Icon`, `CircleAvatar`
 - `ElevatedButton`, `TextButton`, `OutlinedButton`, `IconButton`
 - `FloatingActionButton`
-- `Switch`, `Checkbox`, `Radio`
-- `Chip`
+- `Switch`, `Checkbox`, `Radio`, `Chip`
 
 Containers (`Card`, `Container`, `Padding`, etc.) are traversed to find their content children.
 

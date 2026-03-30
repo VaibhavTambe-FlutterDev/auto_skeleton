@@ -1,0 +1,18 @@
+build/
+.dart_tool/
+.idea/
+*.iml
+
+# Example platform folders (not needed on pub.dev)
+example/android/
+example/ios/
+example/linux/
+example/macos/
+example/web/
+example/windows/
+example/.idea/
+example/*.iml
+example/build/
+
+# Original screenshots in example (copies in screenshots/ are used by README)
+example/assets/

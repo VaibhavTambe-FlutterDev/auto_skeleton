@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:auto_skeleton/auto_skeleton.dart';
@@ -179,6 +180,62 @@ void main() {
       await tester.pump();
 
       expect(find.byType(AutoSkeleton), findsOneWidget);
+    });
+  });
+
+  group('AutoSkeletonBuilder', () {
+    testWidgets('shows skeleton while loading, then content', (tester) async {
+      final completer = Completer<String>();
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: AutoSkeletonBuilder<String>(
+              future: completer.future,
+              skeleton: const Text('Skeleton'),
+              builder: (context, data) => Text('Loaded: $data'),
+            ),
+          ),
+        ),
+      );
+
+      // Should show skeleton (loading state).
+      await tester.pump();
+      expect(find.text('Skeleton'), findsOneWidget);
+      expect(find.textContaining('Loaded'), findsNothing);
+
+      // Complete the future.
+      completer.complete('Hello');
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 500));
+
+      // Should show loaded content.
+      expect(find.text('Loaded: Hello'), findsOneWidget);
+    });
+
+    testWidgets('shows error builder on failure', (tester) async {
+      final completer = Completer<String>();
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: AutoSkeletonBuilder<String>(
+              future: completer.future,
+              skeleton: const Text('Skeleton'),
+              builder: (context, data) => Text('Loaded: $data'),
+              errorBuilder: (context, error) => Text('Error: $error'),
+            ),
+          ),
+        ),
+      );
+
+      await tester.pump();
+
+      // Complete with error.
+      completer.completeError('Network failed');
+      await tester.pump();
+
+      expect(find.text('Error: Network failed'), findsOneWidget);
     });
   });
 }

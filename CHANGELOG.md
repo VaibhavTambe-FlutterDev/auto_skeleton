@@ -1,3 +1,12 @@
+## 0.1.1
+
+* **`AutoSkeletonBuilder`** — async data loading with automatic skeleton display
+  * Supports `Future` and `Stream` data sources
+  * Zero `setState` needed — skeleton shown while loading, content when done
+  * Built-in `errorBuilder` for error states
+  * `onData` / `onError` callbacks
+* Added tests for builder (13 total tests passing)
+
 ## 0.1.0
 
 * Initial release

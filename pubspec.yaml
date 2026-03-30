@@ -2,7 +2,7 @@ name: auto_skeleton
 description: >
   Auto-generate skeleton/shimmer loading screens from your actual widget tree.
   Zero fake data needed — just wrap your widget and get a matching placeholder shape automatically.
-version: 0.1.0
+version: 0.1.1
 homepage: https://github.com/VaibhavTambe-FlutterDev/auto_skeleton
 repository: https://github.com/VaibhavTambe-FlutterDev/auto_skeleton
 issue_tracker: https://github.com/VaibhavTambe-FlutterDev/auto_skeleton/issues

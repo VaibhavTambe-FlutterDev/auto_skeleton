@@ -28,6 +28,8 @@ Building skeleton loading UIs manually is tedious and goes out of sync with your
 |---|---|---|---|
 | Auto-detect widget shapes | ✅ | ✅ | ❌ |
 | Zero fake data needed | ✅ | ❌ (needs mock data) | ❌ |
+| Async builder (no setState) | ✅ | ❌ | ❌ |
+| Future + Stream support | ✅ | ❌ | ❌ |
 | Theme-aware colors | ✅ | ❌ | ❌ |
 | Extension syntax `.withSkeleton()` | ✅ | ❌ | ❌ |
 | Pre-built presets (food card, product card) | ✅ | ❌ | ❌ |
@@ -74,6 +76,37 @@ AutoSkeleton(
 That's it! When `enabled: true`, the package scans the widget tree and renders matching skeleton bones with a shimmer animation. When `enabled: false`, your actual content is shown.
 
 Colors are **automatically derived from your app's theme** — works in both light and dark mode with zero configuration.
+
+### AutoSkeletonBuilder — Zero setState
+
+Handle async data loading with automatic skeleton. No `setState`, no `_isLoading` boolean:
+
+```dart
+AutoSkeletonBuilder<User>(
+  future: fetchUser(),
+  skeleton: ListTile(
+    leading: CircleAvatar(child: Icon(Icons.person)),
+    title: Text('Placeholder name'),
+    subtitle: Text('Loading...'),
+  ),
+  builder: (context, user) => ListTile(
+    leading: CircleAvatar(backgroundImage: NetworkImage(user.avatar)),
+    title: Text(user.name),
+    subtitle: Text(user.bio),
+  ),
+)
+```
+
+Works with `Stream` too:
+
+```dart
+AutoSkeletonBuilder<List<Post>>(
+  stream: postStream(),
+  skeleton: MyPostListSkeleton(),
+  builder: (context, posts) => PostList(posts),
+  errorBuilder: (context, error) => ErrorWidget(error),
+)
+```
 
 ### Extension Syntax
 

@@ -49,6 +49,16 @@ class _DemoPageState extends State<DemoPage> {
     setState(() => _isLoading = !_isLoading);
   }
 
+  /// Simulates an API call with a 3-second delay.
+  Future<Map<String, String>> _fakeFetchUser() async {
+    await Future.delayed(const Duration(seconds: 3));
+    return {
+      'name': 'Vaibhav Tambe',
+      'bio': 'Flutter Developer & Open Source',
+      'initials': 'VT',
+    };
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -80,6 +90,109 @@ class _DemoPageState extends State<DemoPage> {
             padding: const EdgeInsets.symmetric(horizontal: 16),
             sliver: SliverList.list(
               children: [
+                // ── Section: Auto Builder (async) ──
+                _SectionHeader(
+                  title: 'AutoSkeletonBuilder',
+                  subtitle: 'Async data — zero setState',
+                  icon: Icons.auto_awesome_rounded,
+                ),
+                const SizedBox(height: 8),
+                AutoSkeletonBuilder<Map<String, String>>(
+                  future: _fakeFetchUser(),
+                  skeleton: Card(
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                      side: BorderSide(color: colorScheme.outlineVariant),
+                    ),
+                    child: Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: Row(
+                        children: [
+                          CircleAvatar(
+                            radius: 28,
+                            backgroundColor: colorScheme.secondaryContainer,
+                          ),
+                          const SizedBox(width: 16),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text('Loading name...', style: theme.textTheme.titleMedium),
+                                const SizedBox(height: 4),
+                                Text('Loading bio...', style: theme.textTheme.bodyMedium),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  builder: (context, user) => Card(
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                      side: BorderSide(color: colorScheme.outlineVariant),
+                    ),
+                    child: Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: Row(
+                        children: [
+                          CircleAvatar(
+                            radius: 28,
+                            backgroundColor: colorScheme.secondaryContainer,
+                            child: Text(
+                              user['initials']!,
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                color: colorScheme.onSecondaryContainer,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 16),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  user['name']!,
+                                  style: theme.textTheme.titleMedium?.copyWith(
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  user['bio']!,
+                                  style: theme.textTheme.bodyMedium?.copyWith(
+                                    color: colorScheme.onSurfaceVariant,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: Colors.green.shade50,
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Text(
+                              'Online',
+                              style: TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w600,
+                                color: Colors.green.shade700,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+
+                const SizedBox(height: 28),
+
                 // ── Section: User Profile Card ──
                 _SectionHeader(
                   title: 'Profile Card',

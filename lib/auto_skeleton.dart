@@ -14,6 +14,9 @@ library auto_skeleton;
 // Core widget
 export 'src/smart_placeholder.dart';
 
+// Builder (async data + auto skeleton)
+export 'src/auto_skeleton_builder.dart';
+
 // Configuration
 export 'src/smart_placeholder_config.dart';
 

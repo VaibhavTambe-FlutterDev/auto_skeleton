@@ -1,3 +1,9 @@
+## 0.1.2
+
+* Added `screenshots` field to pubspec.yaml for pub.dev gallery
+* Updated `flutter_lints` to v5.0.0 for latest analysis rules
+* Improved pub.dev scoring compliance
+
 ## 0.1.1
 
 * **`AutoSkeletonBuilder`** — async data loading with automatic skeleton display

@@ -1,7 +1,7 @@
 name: auto_skeleton
 description: >-
   Auto-generate skeleton shimmer loading placeholder from your widget tree. Zero fake data, theme-aware, async builder support.
-version: 0.1.1
+version: 0.1.2
 homepage: https://github.com/VaibhavTambe-FlutterDev/auto_skeleton
 repository: https://github.com/VaibhavTambe-FlutterDev/auto_skeleton
 issue_tracker: https://github.com/VaibhavTambe-FlutterDev/auto_skeleton/issues
@@ -11,6 +11,16 @@ topics:
   - loading
   - placeholder
   - ui
+
+screenshots:
+  - description: 'Skeleton loading state — auto-generated from widget tree'
+    path: screenshots/02_skeleton_top.png
+  - description: 'Loaded content state — real widgets displayed'
+    path: screenshots/01_loaded_top.png
+  - description: 'Product cards and food delivery with skeleton'
+    path: screenshots/03_skeleton_bottom.png
+  - description: 'Food delivery cards and annotation controls loaded'
+    path: screenshots/04_loaded_bottom.png
 
 environment:
   sdk: ">=3.0.0 <4.0.0"
@@ -23,4 +33,4 @@ dependencies:
 dev_dependencies:
   flutter_test:
     sdk: flutter
-  flutter_lints: ^3.0.0
+  flutter_lints: ^5.0.0

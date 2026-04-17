@@ -25,8 +25,8 @@ class SkeletonPresets {
         itemBuilder: (context, index) {
           return SizedBox(
             height: itemHeight,
-            child: ListTile(
-              leading: const CircleAvatar(
+            child: const ListTile(
+              leading: CircleAvatar(
                 backgroundColor: Colors.transparent,
                 child: Icon(Icons.person, color: Colors.transparent),
               ),
@@ -38,7 +38,7 @@ class SkeletonPresets {
                 'Subtitle text',
                 style: TextStyle(color: Colors.transparent),
               ),
-              trailing: const Icon(Icons.chevron_right,
+              trailing: Icon(Icons.chevron_right,
                   color: Colors.transparent),
             ),
           );
@@ -69,7 +69,7 @@ class SkeletonPresets {
               color: Colors.transparent,
             ),
             const SizedBox(height: 8),
-            Text(
+            const Text(
               'Product name here',
               style: TextStyle(
                 fontSize: 14,
@@ -77,7 +77,7 @@ class SkeletonPresets {
               ),
             ),
             const SizedBox(height: 4),
-            Text(
+            const Text(
               '₹999',
               style: TextStyle(
                 fontSize: 16,
@@ -86,7 +86,7 @@ class SkeletonPresets {
               ),
             ),
             const SizedBox(height: 4),
-            Row(
+            const Row(
               children: [
                 Icon(Icons.star, size: 14, color: Colors.transparent),
                 SizedBox(width: 4),
@@ -127,7 +127,7 @@ class SkeletonPresets {
                 ),
               ),
               const SizedBox(width: 12),
-              Expanded(
+              const Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -138,7 +138,7 @@ class SkeletonPresets {
                         color: Colors.transparent,
                       ),
                     ),
-                    const SizedBox(height: 4),
+                    SizedBox(height: 4),
                     Text(
                       'Cuisine • 30 mins',
                       style: TextStyle(
@@ -146,7 +146,7 @@ class SkeletonPresets {
                         color: Colors.transparent,
                       ),
                     ),
-                    const SizedBox(height: 4),
+                    SizedBox(height: 4),
                     Row(
                       children: [
                         Icon(Icons.star, size: 14, color: Colors.transparent),
@@ -208,15 +208,15 @@ class SkeletonPresets {
                   Container(
                     height: cardHeight * 0.65,
                     width: cardWidth,
-                    decoration: BoxDecoration(
+                    decoration: const BoxDecoration(
                       color: Colors.transparent,
-                      borderRadius: const BorderRadius.vertical(
+                      borderRadius: BorderRadius.vertical(
                         top: Radius.circular(12),
                       ),
                     ),
                   ),
-                  Padding(
-                    padding: const EdgeInsets.all(8),
+                  const Padding(
+                    padding: EdgeInsets.all(8),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [

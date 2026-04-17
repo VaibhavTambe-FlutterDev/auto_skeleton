@@ -308,7 +308,9 @@ class WidgetTreeScanner {
     if (widget is ElevatedButton ||
         widget is TextButton ||
         widget is OutlinedButton ||
-        widget is IconButton) return BoneType.button;
+        widget is IconButton) {
+      return BoneType.button;
+    }
     return BoneType.generic;
   }
 

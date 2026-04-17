@@ -50,7 +50,7 @@ Building skeleton loading UIs manually is tedious and goes out of sync with your
 
 ```yaml
 dependencies:
-  auto_skeleton: ^0.2.0
+  auto_skeleton: ^0.3.0
 ```
 
 ```bash
@@ -80,6 +80,34 @@ AutoSkeleton(
 That's it! When `enabled: true`, the package scans the widget tree and renders matching skeleton bones with a shimmer animation. When `enabled: false`, your actual content is shown.
 
 Colors are **automatically derived from your app's theme** — works in both light and dark mode with zero configuration.
+
+### List Skeleton — No Fake Data, No Mock Items
+
+The most common skeleton problem: your list is empty while loading, so there's nothing to scan. Use `skeletonItem` + `skeletonItemCount` to provide one template widget — the package repeats it N times and scans that instead:
+
+```dart
+AutoSkeleton(
+  enabled: _isLoading,
+  skeletonItem: ListTile(
+    leading: CircleAvatar(child: Icon(Icons.person)),
+    title: Text('Name'),
+    subtitle: Text('Description'),
+  ),
+  skeletonItemCount: 6,        // show 6 placeholder rows
+  child: ListView.builder(     // real list — empty while loading is fine
+    itemCount: items.length,
+    itemBuilder: (_, i) => MyListTile(item: items[i]),
+  ),
+)
+```
+
+**No fake data needed.** The template is one real-looking widget with any text — the package replaces it with bones automatically.
+
+| | skeletonizer | auto_skeleton |
+|---|---|---|
+| List loading — fake data required | Yes, N items | No — one template |
+| Works when list is empty | No | Yes |
+| Template repeated N times | No | Yes |
 
 ### AutoSkeletonBuilder — Zero setState
 

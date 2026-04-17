@@ -91,7 +91,7 @@ class _DemoPageState extends State<DemoPage> {
             sliver: SliverList.list(
               children: [
                 // ── Section: Auto Builder (async) ──
-                _SectionHeader(
+                const _SectionHeader(
                   title: 'AutoSkeletonBuilder',
                   subtitle: 'Async data — zero setState',
                   icon: Icons.auto_awesome_rounded,
@@ -194,7 +194,7 @@ class _DemoPageState extends State<DemoPage> {
                 const SizedBox(height: 28),
 
                 // ── Section: User Profile Card ──
-                _SectionHeader(
+                const _SectionHeader(
                   title: 'Profile Card',
                   subtitle: 'Auto-detected from widget tree',
                   icon: Icons.person_rounded,
@@ -258,7 +258,7 @@ class _DemoPageState extends State<DemoPage> {
                 const SizedBox(height: 28),
 
                 // ── Section: Social Post ──
-                _SectionHeader(
+                const _SectionHeader(
                   title: 'Social Post',
                   subtitle: '.withSkeleton() extension',
                   icon: Icons.article_rounded,
@@ -367,7 +367,7 @@ class _DemoPageState extends State<DemoPage> {
                 const SizedBox(height: 28),
 
                 // ── Section: E-commerce Product ──
-                _SectionHeader(
+                const _SectionHeader(
                   title: 'Product Cards',
                   subtitle: 'Pulse effect',
                   icon: Icons.shopping_bag_rounded,
@@ -412,7 +412,7 @@ class _DemoPageState extends State<DemoPage> {
                 const SizedBox(height: 28),
 
                 // ── Section: Food Delivery ──
-                _SectionHeader(
+                const _SectionHeader(
                   title: 'Food Delivery',
                   subtitle: 'Restaurant cards',
                   icon: Icons.restaurant_rounded,
@@ -423,7 +423,7 @@ class _DemoPageState extends State<DemoPage> {
                 const SizedBox(height: 28),
 
                 // ── Section: Settings / Annotations ──
-                _SectionHeader(
+                const _SectionHeader(
                   title: 'Annotations',
                   subtitle: 'PlaceholderIgnore & PlaceholderLeaf',
                   icon: Icons.tune_rounded,
@@ -598,9 +598,9 @@ class _DemoPageState extends State<DemoPage> {
     final colorScheme = theme.colorScheme;
 
     final restaurants = [
-      _RestaurantData('Mumbai Masala', 'Indian', '25 min', 4.3, '₹250', Icons.lunch_dining_rounded, Colors.orange),
-      _RestaurantData('Pizza Express', 'Italian', '35 min', 4.1, '₹400', Icons.local_pizza_rounded, Colors.red),
-      _RestaurantData('Sushi House', 'Japanese', '40 min', 4.6, '₹600', Icons.set_meal_rounded, Colors.teal),
+      const _RestaurantData('Mumbai Masala', 'Indian', '25 min', 4.3, '₹250', Icons.lunch_dining_rounded, Colors.orange),
+      const _RestaurantData('Pizza Express', 'Italian', '35 min', 4.1, '₹400', Icons.local_pizza_rounded, Colors.red),
+      const _RestaurantData('Sushi House', 'Japanese', '40 min', 4.6, '₹600', Icons.set_meal_rounded, Colors.teal),
     ];
 
     return restaurants.map((r) {

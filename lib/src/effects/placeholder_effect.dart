@@ -13,6 +13,13 @@ abstract class PlaceholderEffect {
   /// Returns a copy of this effect with theme-derived colors applied,
   /// only where the user hasn't explicitly set colors.
   PlaceholderEffect resolveWithTheme(ColorScheme colorScheme) => this;
+
+  /// Flat fallback color used to paint a solid block before the first
+  /// scan completes (prevents invisible-flash on first frame).
+  Color fallbackColor(ColorScheme colorScheme) {
+    final isDark = colorScheme.brightness == Brightness.dark;
+    return isDark ? const Color(0xFF2A2A2A) : colorScheme.surfaceContainerHighest;
+  }
 }
 
 /// A shimmer effect that sweeps a highlight gradient across placeholder bones.
@@ -83,6 +90,9 @@ class _ResolvedShimmerEffect extends PlaceholderEffect {
   void paint(Canvas canvas, Rect rect, Animation<double> animation) {
     _paintShimmer(canvas, rect, animation, baseColor, highlightColor, direction);
   }
+
+  @override
+  Color fallbackColor(ColorScheme colorScheme) => baseColor;
 }
 
 /// Shared shimmer painting logic.

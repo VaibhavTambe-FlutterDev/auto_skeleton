@@ -9,7 +9,7 @@
 ///   child: MyActualWidget(),
 /// )
 /// ```
-library auto_skeleton;
+library;
 
 // Core widget
 export 'src/smart_placeholder.dart';

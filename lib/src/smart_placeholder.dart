@@ -5,20 +5,17 @@ import 'effects/placeholder_effect.dart';
 import 'smart_placeholder_config.dart';
 import 'widget_tree_scanner.dart';
 
-/// Global bone cache to avoid redundant scanning.
-/// Keyed by widget identity for reuse across rebuilds.
-final _boneCache = <Key, _CachedBones>{};
-
-/// Cached bone data with size fingerprint for invalidation.
+/// Cached bone data with size + theme fingerprint for invalidation.
+/// Held per-state (not globally) — disposed widgets release their cache.
 class _CachedBones {
   final List<BoneRect> bones;
   final Size size;
-  final int childHashCode;
+  final Brightness themeBrightness;
 
   const _CachedBones({
     required this.bones,
     required this.size,
-    required this.childHashCode,
+    required this.themeBrightness,
   });
 }
 
@@ -41,6 +38,20 @@ class _CachedBones {
 ///       subtitle: Text('Software Developer'),
 ///       trailing: Icon(Icons.chevron_right),
 ///     ),
+///   ),
+/// )
+/// ```
+///
+/// ## List Skeleton (no fake data needed)
+///
+/// ```dart
+/// AutoSkeleton(
+///   enabled: _isLoading,
+///   skeletonItem: MyListItemWidget(),
+///   skeletonItemCount: 5,
+///   child: ListView.builder(
+///     itemCount: items.length,
+///     itemBuilder: (_, i) => MyListItemWidget(data: items[i]),
 ///   ),
 /// )
 /// ```
@@ -74,6 +85,32 @@ class AutoSkeleton extends StatefulWidget {
   /// Curve of the switch animation.
   final Curve? switchAnimationCurve;
 
+  /// Template widget to repeat as skeleton rows while loading.
+  ///
+  /// When provided along with [skeletonItemCount], the skeleton is generated
+  /// from [skeletonItemCount] copies of this widget — not from [child].
+  /// This solves the "nothing to scan" problem for lists: real data isn't
+  /// needed during loading.
+  ///
+  /// ```dart
+  /// AutoSkeleton(
+  ///   enabled: _isLoading,
+  ///   skeletonItem: MyListTile(),
+  ///   skeletonItemCount: 6,
+  ///   child: realListView,
+  /// )
+  /// ```
+  final Widget? skeletonItem;
+
+  /// Number of [skeletonItem] rows to render as the skeleton.
+  /// Defaults to 5 when [skeletonItem] is set.
+  final int skeletonItemCount;
+
+  /// When true, the skeleton column is wrapped in a [SingleChildScrollView].
+  /// Useful when [skeletonItemCount] items exceed the available height.
+  /// Defaults to false (items are clipped to available space).
+  final bool skeletonScrollable;
+
   const AutoSkeleton({
     super.key,
     required this.enabled,
@@ -82,11 +119,16 @@ class AutoSkeleton extends StatefulWidget {
     this.enableSwitchAnimation,
     this.switchAnimationDuration,
     this.switchAnimationCurve,
+    this.skeletonItem,
+    this.skeletonItemCount = 5,
+    this.skeletonScrollable = false,
   });
 
-  /// Clears the global bone cache. Call this if you need to force
-  /// a rescan of all skeleton layouts (e.g., after a theme change).
-  static void clearCache() => _boneCache.clear();
+  /// No-op. Kept for API compatibility; each [AutoSkeleton] now owns its
+  /// own cache which is released when the widget is disposed. Theme
+  /// changes and content changes invalidate automatically.
+  @Deprecated('Cache is now per-widget and auto-invalidates. Safe to remove.')
+  static void clearCache() {}
 
   @override
   State<AutoSkeleton> createState() => _AutoSkeletonState();
@@ -99,6 +141,11 @@ class _AutoSkeletonState extends State<AutoSkeleton>
   List<BoneRect> _bones = [];
   bool _hasScanned = false;
   final GlobalKey _childKey = GlobalKey();
+  // Separate key for the off-screen skeleton-item column.
+  final GlobalKey _skeletonColumnKey = GlobalKey();
+  // Per-state cache — disposed with the widget, no manual cleanup.
+  _CachedBones? _cache;
+  Brightness? _lastBrightness;
 
   AutoSkeletonConfigData get _config {
     return AutoSkeletonConfig.of(context) ??
@@ -126,6 +173,19 @@ class _AutoSkeletonState extends State<AutoSkeleton>
     if (_effectController == null) {
       _initEffectController();
     }
+    // Invalidate cache and effect on theme brightness change
+    // (light↔dark would otherwise keep stale colors).
+    final brightness = Theme.of(context).colorScheme.brightness;
+    if (_lastBrightness != null && _lastBrightness != brightness) {
+      _cache = null;
+      _initEffectController();
+      if (widget.enabled) {
+        _hasScanned = false;
+        _bones = [];
+        _scheduleRescan();
+      }
+    }
+    _lastBrightness = brightness;
   }
 
   void _initEffectController() {
@@ -152,6 +212,20 @@ class _AutoSkeletonState extends State<AutoSkeleton>
       _initEffectController();
       _scheduleRescan();
     }
+
+    // Invalidate scan + cache if template or child reference changes.
+    final childChanged =
+        !identical(oldWidget.child, widget.child) ||
+            oldWidget.skeletonItem != widget.skeletonItem ||
+            oldWidget.skeletonItemCount != widget.skeletonItemCount;
+    if (childChanged) {
+      _cache = null;
+      if (widget.enabled) {
+        _hasScanned = false;
+        _bones = [];
+        _scheduleRescan();
+      }
+    }
   }
 
   void _scheduleRescan() {
@@ -162,27 +236,30 @@ class _AutoSkeletonState extends State<AutoSkeleton>
   }
 
   void _scanTree() {
-    final childContext = _childKey.currentContext;
-    if (childContext == null) return;
+    // When skeletonItem is provided, scan the off-screen column, not child.
+    final scanKey =
+        widget.skeletonItem != null ? _skeletonColumnKey : _childKey;
+    final scanContext = scanKey.currentContext;
+    if (scanContext == null) return;
 
-    final renderBox = childContext.findRenderObject() as RenderBox?;
+    final renderBox = scanContext.findRenderObject() as RenderBox?;
     if (renderBox == null || !renderBox.hasSize) return;
 
     final currentSize = renderBox.size;
-    final childHash = widget.child.hashCode;
+    final brightness = Theme.of(context).colorScheme.brightness;
 
-    // Check cache — reuse bones if size and child haven't changed.
-    if (widget.key != null) {
-      final cached = _boneCache[widget.key!];
-      if (cached != null &&
-          cached.size == currentSize &&
-          cached.childHashCode == childHash) {
+    // Per-state cache: hit when size + theme match.
+    final cached = _cache;
+    if (cached != null &&
+        cached.size == currentSize &&
+        cached.themeBrightness == brightness) {
+      if (!_hasScanned) {
         setState(() {
           _bones = cached.bones;
           _hasScanned = true;
         });
-        return;
       }
+      return;
     }
 
     final scanner = WidgetTreeScanner(
@@ -194,16 +271,13 @@ class _AutoSkeletonState extends State<AutoSkeleton>
       justifyMultiLineText: _config.justifyMultiLineText,
     );
 
-    final scannedBones = scanner.scan(childContext);
+    final scannedBones = scanner.scan(scanContext);
 
-    // Cache the result if we have a key.
-    if (widget.key != null) {
-      _boneCache[widget.key!] = _CachedBones(
-        bones: scannedBones,
-        size: currentSize,
-        childHashCode: childHash,
-      );
-    }
+    _cache = _CachedBones(
+      bones: scannedBones,
+      size: currentSize,
+      themeBrightness: brightness,
+    );
 
     setState(() {
       _bones = scannedBones;
@@ -216,6 +290,23 @@ class _AutoSkeletonState extends State<AutoSkeleton>
     _effectController?.dispose();
     _switchController?.dispose();
     super.dispose();
+  }
+
+  Widget _buildSkeletonColumn() {
+    final items = List.generate(
+      widget.skeletonItemCount,
+      (_) => widget.skeletonItem!,
+    );
+    final column = KeyedSubtree(
+      key: _skeletonColumnKey,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: items,
+      ),
+    );
+    return widget.skeletonScrollable
+        ? SingleChildScrollView(physics: const NeverScrollableScrollPhysics(), child: column)
+        : ClipRect(child: column);
   }
 
   @override
@@ -240,20 +331,38 @@ class _AutoSkeletonState extends State<AutoSkeleton>
       return child;
     }
 
+    // Skeleton column stays in the layout tree (opacity 0, not Offstage) so
+    // the scanner can read real RenderBox sizes from it.
+    final skeletonColumn = widget.skeletonItem != null
+        ? Opacity(opacity: 0.0, child: _buildSkeletonColumn())
+        : null;
+
     if (!_hasScanned) {
       SchedulerBinding.instance.addPostFrameCallback((_) {
         if (mounted && widget.enabled) _scanTree();
       });
 
-      return Opacity(
-        opacity: 0.0,
-        child: child,
+      // Paint a solid fallback on the pre-scan frame so the user never
+      // sees empty/invisible content before bones appear.
+      final fallback = _effect.fallbackColor(Theme.of(context).colorScheme);
+
+      return Stack(
+        children: [
+          Opacity(opacity: 0.0, child: child),
+          if (skeletonColumn != null) skeletonColumn,
+          Positioned.fill(
+            child: IgnorePointer(
+              child: ColoredBox(color: fallback),
+            ),
+          ),
+        ],
       );
     }
 
     return Stack(
       children: [
         Opacity(opacity: 0.0, child: child),
+        if (skeletonColumn != null) skeletonColumn,
         if (_effectController != null)
           Positioned.fill(
             child: IgnorePointer(

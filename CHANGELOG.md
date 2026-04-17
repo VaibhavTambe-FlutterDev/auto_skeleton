@@ -1,3 +1,18 @@
+## 0.3.0
+
+### List Skeleton — template-based bones (no fake data)
+* `skeletonItem` + `skeletonItemCount` on `AutoSkeleton` — pass one template widget and the package repeats it N times to generate the skeleton. Solves the "empty list = nothing to scan" problem.
+* `skeletonScrollable` — wraps the template column in a non-scrolling viewport when items exceed available height.
+
+### Performance & Correctness
+* **Memory leak fixed** — removed the global `_boneCache` map; each widget now owns its cache and releases it on dispose. `AutoSkeleton.clearCache()` is deprecated (no-op).
+* **Cache hits without a `Key`** — previously, widgets without an explicit key re-scanned on every rebuild. Cache is now per-state and always active.
+* **Theme change auto-invalidation** — switching light ↔ dark now rebuilds bones with the correct colors (previously stuck with stale colors until manual `clearCache()`).
+* **Cache fingerprint** is now `size + themeBrightness` instead of object-identity `hashCode`, eliminating false misses on structurally identical rebuilds.
+
+### UX
+* **First-frame flash eliminated** — added `fallbackColor()` to `PlaceholderEffect`; the pre-scan frame now paints a solid shimmer-base rectangle instead of invisible content.
+
 ## 0.2.0
 
 ### ListView / GridView / CustomScrollView support

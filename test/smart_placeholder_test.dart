@@ -103,6 +103,35 @@ void main() {
       expect(find.text('Visible'), findsOneWidget);
       expect(find.text('Ignored'), findsOneWidget);
     });
+
+    testWidgets('skeletonItem repeats template when list data is empty',
+        (tester) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: AutoSkeleton(
+              enabled: true,
+              skeletonItem: const ListTile(
+                title: Text('Template title'),
+                subtitle: Text('Template subtitle'),
+              ),
+              skeletonItemCount: 4,
+              child: ListView.builder(
+                itemCount: 0,
+                itemBuilder: (_, __) => const SizedBox.shrink(),
+              ),
+            ),
+          ),
+        ),
+      );
+
+      await tester.pump();
+      await tester.pump();
+
+      // The template widget is in the tree 4 times (invisibly) for scanning.
+      expect(find.text('Template title'), findsNWidgets(4));
+      expect(find.byType(CustomPaint), findsWidgets);
+    });
   });
 
   group('PlaceholderEffect', () {

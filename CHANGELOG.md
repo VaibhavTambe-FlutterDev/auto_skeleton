@@ -1,3 +1,22 @@
+## 0.2.0
+
+### ListView / GridView / CustomScrollView support
+* Fixed widget tree scanner to handle scrollable widgets correctly
+* Safe coordinate transforms for sliver-based layouts (no more overflow/wrong sizing)
+* Bones are clipped to visible viewport bounds — offscreen items are skipped
+* Handles `Stack`, `Wrap`, `IntrinsicHeight` via improved render tree traversal
+
+### Bone caching
+* Skeleton layout is cached and reused across rebuilds
+* Cache invalidates automatically when widget size or child changes
+* `AutoSkeleton.clearCache()` for manual invalidation
+
+### App-level wrapper (zero per-widget wrapping)
+* `AutoSkeletonApp.builder()` — wrap entire app, every screen gets skeleton automatically
+* `AutoSkeletonAppController` — programmatic `startLoading()` / `stopLoading()` / `toggle()`
+* `controller.observer` — `NavigatorObserver` that auto-shows skeleton during route transitions
+* Works with `ValueNotifier<bool>` for simple reactive control
+
 ## 0.1.2
 
 * Added `screenshots` field to pubspec.yaml for pub.dev gallery

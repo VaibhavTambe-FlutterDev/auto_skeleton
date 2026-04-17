@@ -40,14 +40,17 @@ Building skeleton loading UIs manually is tedious and goes out of sync with your
 | Annotation system | Yes | Yes | No |
 | Switch animation | Yes | Yes | No |
 | Dark mode auto-detection | Yes | Yes | No |
+| ListView/GridView support | Yes | Yes | Shimmer only |
+| Bone caching (no rebuild) | Yes | No | No |
+| App-level wrapper | Yes | No | No |
 
-> *Comparison based on default features of each package as of March 2026. All packages are actively maintained and excellent in their own right.*
+> *Comparison based on default features of each package as of April 2026. All packages are actively maintained and excellent in their own right.*
 
 ## Installation
 
 ```yaml
 dependencies:
-  auto_skeleton: ^0.1.1
+  auto_skeleton: ^0.2.0
 ```
 
 ```bash
@@ -335,6 +338,49 @@ AutoSkeletonConfig(
   ),
   child: MaterialApp(...),
 )
+```
+
+## App-Level Wrapper (Zero Per-Widget Wrapping)
+
+Wrap your entire app — every screen gets skeleton automatically:
+
+```dart
+final skeletonController = AutoSkeletonAppController();
+
+MaterialApp(
+  builder: AutoSkeletonApp.builder(
+    controller: skeletonController,
+  ),
+  navigatorObservers: [skeletonController.observer],
+  home: MyHomePage(),
+)
+```
+
+Control it programmatically:
+
+```dart
+// Show skeleton
+skeletonController.startLoading();
+
+// Hide skeleton, show content
+skeletonController.stopLoading();
+
+// Toggle
+skeletonController.toggle();
+```
+
+Or use a simple `ValueNotifier`:
+
+```dart
+final isLoading = ValueNotifier(true);
+
+MaterialApp(
+  builder: AutoSkeletonApp.builder(loadingNotifier: isLoading),
+  home: MyHomePage(),
+)
+
+// Later...
+isLoading.value = false; // skeleton disappears
 ```
 
 ## Sliver Support

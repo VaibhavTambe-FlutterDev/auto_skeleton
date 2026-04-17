@@ -5,6 +5,23 @@ import 'effects/placeholder_effect.dart';
 import 'smart_placeholder_config.dart';
 import 'widget_tree_scanner.dart';
 
+/// Global bone cache to avoid redundant scanning.
+/// Keyed by widget identity for reuse across rebuilds.
+final _boneCache = <Key, _CachedBones>{};
+
+/// Cached bone data with size fingerprint for invalidation.
+class _CachedBones {
+  final List<BoneRect> bones;
+  final Size size;
+  final int childHashCode;
+
+  const _CachedBones({
+    required this.bones,
+    required this.size,
+    required this.childHashCode,
+  });
+}
+
 /// Wraps your actual widget tree and auto-generates a matching
 /// skeleton/shimmer placeholder while [enabled] is true.
 ///
@@ -67,6 +84,10 @@ class AutoSkeleton extends StatefulWidget {
     this.switchAnimationCurve,
   });
 
+  /// Clears the global bone cache. Call this if you need to force
+  /// a rescan of all skeleton layouts (e.g., after a theme change).
+  static void clearCache() => _boneCache.clear();
+
   @override
   State<AutoSkeleton> createState() => _AutoSkeletonState();
 }
@@ -86,10 +107,8 @@ class _AutoSkeletonState extends State<AutoSkeleton>
 
   PlaceholderEffect get _effect {
     if (widget.effect != null) {
-      // Per-widget override — still resolve with theme for null colors.
       return widget.effect!.resolveWithTheme(Theme.of(context).colorScheme);
     }
-    // Use config's resolved effect (applies baseColor/highlightColor + theme).
     return _config.resolvedEffect(Theme.of(context).colorScheme);
   }
 
@@ -119,7 +138,6 @@ class _AutoSkeletonState extends State<AutoSkeleton>
     super.didUpdateWidget(oldWidget);
 
     if (oldWidget.enabled && !widget.enabled && _enableSwitch) {
-      // Transitioning from loading → content.
       _switchController?.dispose();
       _switchController = AnimationController(
         vsync: this,
@@ -129,7 +147,6 @@ class _AutoSkeletonState extends State<AutoSkeleton>
     }
 
     if (!oldWidget.enabled && widget.enabled) {
-      // Transitioning from content → loading.
       _hasScanned = false;
       _bones = [];
       _initEffectController();
@@ -148,6 +165,26 @@ class _AutoSkeletonState extends State<AutoSkeleton>
     final childContext = _childKey.currentContext;
     if (childContext == null) return;
 
+    final renderBox = childContext.findRenderObject() as RenderBox?;
+    if (renderBox == null || !renderBox.hasSize) return;
+
+    final currentSize = renderBox.size;
+    final childHash = widget.child.hashCode;
+
+    // Check cache — reuse bones if size and child haven't changed.
+    if (widget.key != null) {
+      final cached = _boneCache[widget.key!];
+      if (cached != null &&
+          cached.size == currentSize &&
+          cached.childHashCode == childHash) {
+        setState(() {
+          _bones = cached.bones;
+          _hasScanned = true;
+        });
+        return;
+      }
+    }
+
     final scanner = WidgetTreeScanner(
       textBorderRadius: _config.textBorderRadius,
       containerBorderRadius: _config.containerBorderRadius,
@@ -157,8 +194,19 @@ class _AutoSkeletonState extends State<AutoSkeleton>
       justifyMultiLineText: _config.justifyMultiLineText,
     );
 
+    final scannedBones = scanner.scan(childContext);
+
+    // Cache the result if we have a key.
+    if (widget.key != null) {
+      _boneCache[widget.key!] = _CachedBones(
+        bones: scannedBones,
+        size: currentSize,
+        childHashCode: childHash,
+      );
+    }
+
     setState(() {
-      _bones = scanner.scan(childContext);
+      _bones = scannedBones;
       _hasScanned = true;
     });
   }
@@ -172,14 +220,12 @@ class _AutoSkeletonState extends State<AutoSkeleton>
 
   @override
   Widget build(BuildContext context) {
-    // Always build the child (needed for layout introspection).
     final child = KeyedSubtree(
       key: _childKey,
       child: widget.child,
     );
 
     if (!widget.enabled) {
-      // Not loading — show content, optionally with fade-in.
       if (_switchController != null && _enableSwitch) {
         return AnimatedBuilder(
           animation: _switchController!,
@@ -194,9 +240,7 @@ class _AutoSkeletonState extends State<AutoSkeleton>
       return child;
     }
 
-    // Loading state — show skeleton overlay.
     if (!_hasScanned) {
-      // First frame: build child invisibly to get layout, then scan.
       SchedulerBinding.instance.addPostFrameCallback((_) {
         if (mounted && widget.enabled) _scanTree();
       });
@@ -207,12 +251,9 @@ class _AutoSkeletonState extends State<AutoSkeleton>
       );
     }
 
-    // We have bones — render the skeleton.
     return Stack(
       children: [
-        // Keep child in tree (invisible) to maintain layout.
         Opacity(opacity: 0.0, child: child),
-        // Overlay with skeleton.
         if (_effectController != null)
           Positioned.fill(
             child: IgnorePointer(

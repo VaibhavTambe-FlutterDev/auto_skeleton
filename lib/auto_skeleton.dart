@@ -17,6 +17,9 @@ export 'src/smart_placeholder.dart';
 // Builder (async data + auto skeleton)
 export 'src/auto_skeleton_builder.dart';
 
+// App-level wrapper
+export 'src/auto_skeleton_app.dart';
+
 // Configuration
 export 'src/smart_placeholder_config.dart';
 

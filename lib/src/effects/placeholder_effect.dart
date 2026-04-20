@@ -16,9 +16,15 @@ abstract class PlaceholderEffect {
 
   /// Flat fallback color used to paint a solid block before the first
   /// scan completes (prevents invisible-flash on first frame).
+  ///
+  /// Tuned to have ≥30% luminance delta from common scaffold backgrounds
+  /// — visible against both pure-black (`#0a0a0a`) dark themes and
+  /// default light surfaces.
   Color fallbackColor(ColorScheme colorScheme) {
     final isDark = colorScheme.brightness == Brightness.dark;
-    return isDark ? const Color(0xFF2A2A2A) : colorScheme.surfaceContainerHighest;
+    return isDark
+        ? const Color(0xFF3F3F3F)
+        : colorScheme.surfaceContainerHighest;
   }
 }
 

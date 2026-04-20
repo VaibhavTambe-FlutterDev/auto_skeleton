@@ -111,6 +111,11 @@ class AutoSkeleton extends StatefulWidget {
   /// Defaults to false (items are clipped to available space).
   final bool skeletonScrollable;
 
+  /// When true (debug only), overlays each detected bone with a red outline
+  /// and type label. Useful for diagnosing "blank skeleton" problems —
+  /// if no outlines appear, the scanner didn't find any leaves to replace.
+  final bool debugShowBones;
+
   const AutoSkeleton({
     super.key,
     required this.enabled,
@@ -122,6 +127,7 @@ class AutoSkeleton extends StatefulWidget {
     this.skeletonItem,
     this.skeletonItemCount = 5,
     this.skeletonScrollable = false,
+    this.debugShowBones = false,
   });
 
   /// No-op. Kept for API compatibility; each [AutoSkeleton] now owns its
@@ -273,6 +279,23 @@ class _AutoSkeletonState extends State<AutoSkeleton>
 
     final scannedBones = scanner.scan(scanContext);
 
+    // Fail loud in debug mode: empty scan is almost always a mistake
+    // (template made of Containers with no Text/Icon/Image leaves).
+    assert(() {
+      if (scannedBones.isEmpty) {
+        final source = widget.skeletonItem != null ? 'skeletonItem' : 'child';
+        debugPrint(
+          '⚠️  AutoSkeleton: scan produced 0 bones from $source.\n'
+          '   The template has no introspectable leaves (Text / Icon / Image / '
+          'CircleAvatar / Button / etc.).\n'
+          '   Fix: pass a real widget (ListTile, Card with Text inside), or '
+          'wrap custom widgets with PlaceholderLeaf.\n'
+          '   Set debugShowBones: true to visualize what the scanner found.',
+        );
+      }
+      return true;
+    }());
+
     _cache = _CachedBones(
       bones: scannedBones,
       size: currentSize,
@@ -375,9 +398,71 @@ class _AutoSkeletonState extends State<AutoSkeleton>
               ),
             ),
           ),
+        if (widget.debugShowBones)
+          Positioned.fill(
+            child: IgnorePointer(
+              child: CustomPaint(
+                painter: _DebugBonePainter(bones: _bones),
+              ),
+            ),
+          ),
       ],
     );
   }
+}
+
+/// Debug painter: outlines each scanned bone in red with a type label.
+/// Only used when [AutoSkeleton.debugShowBones] is true.
+class _DebugBonePainter extends CustomPainter {
+  final List<BoneRect> bones;
+
+  _DebugBonePainter({required this.bones});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final outline = Paint()
+      ..color = const Color(0xFFFF3366)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.5;
+
+    for (final bone in bones) {
+      canvas.drawRect(bone.rect, outline);
+
+      final label = bone.type.name;
+      final textPainter = TextPainter(
+        text: TextSpan(
+          text: label,
+          style: const TextStyle(
+            color: Color(0xFFFF3366),
+            fontSize: 9,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        textDirection: TextDirection.ltr,
+      )..layout();
+      textPainter.paint(
+        canvas,
+        Offset(bone.rect.left + 2, bone.rect.top + 2),
+      );
+    }
+
+    // Corner count badge.
+    final badge = TextPainter(
+      text: TextSpan(
+        text: '${bones.length} bones',
+        style: const TextStyle(
+          color: Color(0xFFFF3366),
+          fontSize: 11,
+          fontWeight: FontWeight.bold,
+        ),
+      ),
+      textDirection: TextDirection.ltr,
+    )..layout();
+    badge.paint(canvas, const Offset(4, 4));
+  }
+
+  @override
+  bool shouldRepaint(_DebugBonePainter old) => !identical(old.bones, bones);
 }
 
 /// Variant for sliver widgets (CustomScrollView, etc.).

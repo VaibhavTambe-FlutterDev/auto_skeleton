@@ -50,7 +50,7 @@ Building skeleton loading UIs manually is tedious and goes out of sync with your
 
 ```yaml
 dependencies:
-  auto_skeleton: ^0.3.0
+  auto_skeleton: ^0.4.0
 ```
 
 ```bash
@@ -108,6 +108,21 @@ AutoSkeleton(
 | List loading — fake data required | Yes, N items | No — one template |
 | Works when list is empty | No | Yes |
 | Template repeated N times | No | Yes |
+
+### Debugging: "my skeleton is blank"
+
+If you wrap something and see a blank/empty skeleton, the scanner didn't find any introspectable leaves (`Text`, `Icon`, `Image`, `CircleAvatar`, buttons, etc). Two tools:
+
+```dart
+AutoSkeleton(
+  enabled: true,
+  debugShowBones: true,   // ← overlay red outlines on every detected bone
+  skeletonItem: MyTemplate(),
+  child: realList,
+)
+```
+
+In debug mode, if the scan produces 0 bones, AutoSkeleton prints a warning in the console telling you exactly that. Common cause: your template is made of `Container`s and `SizedBox`es with no leaves — wrap custom widgets with `PlaceholderLeaf` or add real `Text`/`Icon` inside.
 
 ### AutoSkeletonBuilder — Zero setState
 

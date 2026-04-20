@@ -1,3 +1,10 @@
+## 0.4.0
+
+### DX — stop silent failures
+* **Debug-mode warning when scan produces 0 bones.** If your `skeletonItem` template has no introspectable leaves (plain `Container`s with no `Text`/`Icon`/`Image`/etc inside), AutoSkeleton now prints an actionable warning instead of rendering a blank rectangle.
+* **`debugShowBones: true`** flag on `AutoSkeleton` — overlays each detected bone with a red outline and type label. Instantly answers "did the scanner find my widgets?"
+* **Visible pre-scan fallback on dark themes.** Dark fallback color bumped from `#2A2A2A` to `#3F3F3F` so the first-frame block is visible against pure-black (`#0A0A0A`) scaffolds.
+
 ## 0.3.0
 
 ### List Skeleton — template-based bones (no fake data)

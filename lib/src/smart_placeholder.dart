@@ -152,6 +152,7 @@ class _AutoSkeletonState extends State<AutoSkeleton>
   // Per-state cache — disposed with the widget, no manual cleanup.
   _CachedBones? _cache;
   Brightness? _lastBrightness;
+  bool? _lastReduceMotion;
 
   AutoSkeletonConfigData get _config {
     return AutoSkeletonConfig.of(context) ??
@@ -159,10 +160,17 @@ class _AutoSkeletonState extends State<AutoSkeleton>
   }
 
   PlaceholderEffect get _effect {
-    if (widget.effect != null) {
-      return widget.effect!.resolveWithTheme(Theme.of(context).colorScheme);
+    final scheme = Theme.of(context).colorScheme;
+    final raw = widget.effect != null
+        ? widget.effect!.resolveWithTheme(scheme)
+        : _config.resolvedEffect(scheme);
+    // Accessibility: when reduce-motion is on, drop the animation and
+    // render a solid block. Respects OS-level reduce-motion + required by
+    // WCAG 2.3.3 and EU EN 301 549.
+    if (MediaQuery.disableAnimationsOf(context)) {
+      return SolidEffect(color: raw.fallbackColor(scheme));
     }
-    return _config.resolvedEffect(Theme.of(context).colorScheme);
+    return raw;
   }
 
   bool get _enableSwitch =>
@@ -179,19 +187,30 @@ class _AutoSkeletonState extends State<AutoSkeleton>
     if (_effectController == null) {
       _initEffectController();
     }
-    // Invalidate cache and effect on theme brightness change
-    // (light↔dark would otherwise keep stale colors).
     final brightness = Theme.of(context).colorScheme.brightness;
-    if (_lastBrightness != null && _lastBrightness != brightness) {
-      _cache = null;
+    final reduceMotion = MediaQuery.disableAnimationsOf(context);
+
+    final brightnessChanged =
+        _lastBrightness != null && _lastBrightness != brightness;
+    final motionChanged =
+        _lastReduceMotion != null && _lastReduceMotion != reduceMotion;
+
+    // Rebuild controller on theme or reduce-motion change (both alter _effect).
+    if (brightnessChanged || motionChanged) {
       _initEffectController();
+    }
+    // Only theme invalidates bone colors; motion toggle keeps bones valid.
+    if (brightnessChanged) {
+      _cache = null;
       if (widget.enabled) {
         _hasScanned = false;
         _bones = [];
         _scheduleRescan();
       }
     }
+
     _lastBrightness = brightness;
+    _lastReduceMotion = reduceMotion;
   }
 
   void _initEffectController() {

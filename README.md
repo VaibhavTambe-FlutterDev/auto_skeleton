@@ -3,7 +3,13 @@
 [![pub package](https://img.shields.io/pub/v/auto_skeleton.svg)](https://pub.dev/packages/auto_skeleton)
 [![License: BSD-3](https://img.shields.io/badge/license-BSD--3-blue.svg)](https://opensource.org/licenses/BSD-3-Clause)
 
-Auto-generate skeleton/shimmer loading screens from your **actual widget tree**. No fake data needed — just wrap your widget and get a matching placeholder shape automatically.
+**Skeletons that stay in sync with your UI — edit once, not twice.**
+
+Wrap any widget with `AutoSkeleton` and it introspects the tree to generate matching bones automatically. Redesign the real widget and the skeleton follows — no parallel placeholder layout to maintain.
+
+- **Data-independent UIs** (profile cards, detail screens, forms): zero boilerplate — just wrap
+- **Lists / grids**: pass one `skeletonItem` template and it repeats N times (lighter than maintaining a full mock data model)
+- **Theme-aware, async-aware, accessibility-aware** out of the box
 
 ## Screenshots
 
@@ -23,34 +29,47 @@ Auto-generate skeleton/shimmer loading screens from your **actual widget tree**.
 
 ## Why auto_skeleton?
 
-Building skeleton loading UIs manually is tedious and goes out of sync with your real layouts. `auto_skeleton` solves this by **introspecting your widget tree** at render time and generating matching bone shapes for every content widget (Text, Image, Icon, Button, etc.).
+The real cost of skeleton loading states isn't the first-time build — it's the **drift**. Every time you redesign a screen, the manually-crafted placeholder in `shimmer` goes out of date. With `skeletonizer`, you update the skeleton by updating mock data (which you maintain separately from real widgets).
 
-### How It Compares
+`auto_skeleton` keeps both in one place: **your real widget tree.** Change the widget, the skeleton follows — automatic.
+
+### When to pick what
+
+| Your situation | Best tool |
+|---|---|
+| Data-independent layout (profile card, form, detail screen) | **auto_skeleton** — zero boilerplate, just wrap |
+| List/grid where data changes the layout | **auto_skeleton** with `skeletonItem` template (or `skeletonizer` with mock data — both work) |
+| Pixel-exact designer-spec placeholders | **shimmer** — manual control |
+| Custom-painted, markdown, SVG, chart-heavy UI | **shimmer** — less surface area for surprises |
+| Simple one-off animation on known shapes | **shimmer** — smallest footprint |
+
+### Feature comparison
 
 | Feature | auto_skeleton | skeletonizer | shimmer |
 |---|---|---|---|
-| Auto-detect widget shapes | Yes | Yes | No |
-| Zero fake data needed | Yes | No (needs mock data) | No |
-| Async builder (no setState) | Yes | No | No |
-| Future + Stream support | Yes | No | No |
-| Theme-aware colors | Yes | No | No |
+| Auto-match widget shapes | Yes | Yes | No |
+| Layout-driven skeleton (no mock data model) | Yes | No (needs mock objects) | No |
+| List template via one widget | Yes (`skeletonItem`) | Via mock data list | No |
+| Async builder (no `setState`) | Yes | No | No |
+| `Future` + `Stream` support | Yes | No | No |
+| Theme-aware colors | Yes | Yes | No |
+| Reduce-motion accessibility | Yes (auto) | Yes | No |
+| Debug overlay (`debugShowBones`) | Yes | No | No |
 | Extension syntax `.withSkeleton()` | Yes | No | No |
 | Pre-built presets | Yes | No | No |
-| Multiple effects (shimmer, pulse, solid) | Yes | Yes | Shimmer only |
-| Annotation system | Yes | Yes | No |
+| Multiple effects (shimmer / pulse / solid) | Yes | Yes | Shimmer only |
+| Annotation system (`Ignore`, `Leaf`, `Replace`) | Yes | Yes | No |
 | Switch animation | Yes | Yes | No |
-| Dark mode auto-detection | Yes | Yes | No |
-| ListView/GridView support | Yes | Yes | Shimmer only |
-| Bone caching (no rebuild) | Yes | No | No |
+| Per-state bone caching | Yes | N/A | No |
 | App-level wrapper | Yes | No | No |
 
-> *Comparison based on default features of each package as of April 2026. All packages are actively maintained and excellent in their own right.*
+> *Comparison based on default features of each package as of April 2026. All three packages are actively maintained and excellent in their own right.*
 
 ## Installation
 
 ```yaml
 dependencies:
-  auto_skeleton: ^0.4.0
+  auto_skeleton: ^0.4.1
 ```
 
 ```bash

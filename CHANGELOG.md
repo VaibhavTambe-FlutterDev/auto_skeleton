@@ -1,3 +1,13 @@
+## 0.4.1
+
+### Accessibility
+* **Respects `MediaQuery.disableAnimations`** (WCAG 2.3.3 / EU EN 301 549). When the user has "reduce motion" enabled at the OS level, shimmer/pulse animations automatically drop to a solid block. No opt-in needed — required for EU and government deployments.
+
+### Docs / positioning
+* README rewritten to be honest about the list case: `skeletonItem` still requires a template widget, but maintains it in widgets not mock data.
+* New "When to pick what" section with honest guidance about when to use `auto_skeleton` vs `skeletonizer` vs `shimmer`.
+* Feature comparison table expanded with reduce-motion and debug-overlay rows.
+
 ## 0.4.0
 
 ### DX — stop silent failures
